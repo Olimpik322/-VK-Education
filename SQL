@@ -1,0 +1,54 @@
+В рамках одного SQL запроса вам необходимо подготовить список мужчин –
+теоретически возможных близнецов среди всех клиентов (с совпадением фамилии и
+даты рождения): [ID клиента, фамилия, имя, день рождения]:
+-
+SELECT Client.ID AS ID_клиента, Client.Surname AS фамилия, Client.Name AS имя, Client.Birthday AS день_рождения
+FROM Client
+INNER JOIN (
+SELECT Client.Surname, Client.Birthday
+FROM Client
+WHERE Client.Gender = 'M'
+GROUP BY Client.Surname, Client.Birthday
+HAVING COUNT(*) > 1
+) AS Близнецы ON Client.Surname = Близнецы.Surname AND Client.Birthday = Близнецы.Birthday
+WHERE Client.Gender = 'M'
+ORDER BY Client.Surname, Client.Birthday, Client.Name;
+-
+
+Если заказ выполнен в день рождения клиента, компания хочет ввести скидку в
+размере 20% от суммы заказа. Требуется определить общую сумму скидки по всем
+клиентам за 2023 год, как если бы скидка действовала:
+-
+SELECT SUM(orders.Amount * 0.2) AS Общая_сумма_скидки_2023 
+FROM Orders
+JOIN Client On Orders.Client_ID = Client.ID
+WHERE  YEAR(Orders.Ord_Time) = 2023 AND MONTH(Orders.Ord_Time) = MONTH(Client.Birthday) AND DAY(Orders.Ord_Time) = DAY(Client.Birthday);
+-
+
+Мы отсылаем поздравительные сообщения по электронной почте всем клиентам
+Компании на 23 Февраля и 8 Марта. Одним запросом определите количество
+поздравлений, которые следует отправить отдельно 23 Февраля и 8 Марта:
+-
+SELECT '23 Февраля' AS holiday, COUNT(*) AS Количество_поздравлений
+FROM Client
+WHERE Gender = 'M'  AND EMail IS NOT NULL
+UNION ALL
+SELECT '8 Марта' AS holiday, COUNT(*) AS  Количество_поздравлений
+FROM Client
+WHERE Gender = 'F' AND EMail IS NOT NULL;
+-
+
+Перед Новым 2024-м Годом решено отправить подарки руководителям фирм,
+сотрудники которых за год в общей сложности сделали заказов более чем на 900 000
+руб. Необходимо подготовить такой список: [Название фирмы, адрес, сумма заказов]:
+-
+SELECT Firm.Name AS Название_фирмы, Firm.Address, SUM(Orders.Amount) AS Сумма_заказов
+FROM Firm
+JOIN Client ON Firm.ID = Client.Firm_ID
+JOIN Orders ON Client.ID = Orders.Client_ID
+WHERE YEAR(Orders.Ord_Time) = 2023
+GROUP BY Firm.ID, Firm.Name, Firm.Address
+HAVING  SUM(Orders.Amount) > 900000
+ORDER BY Сумма_заказов DESC;
+-
+
